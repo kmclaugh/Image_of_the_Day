@@ -1,32 +1,27 @@
-from urllib.request import urlopen
+#!/usr/bin/env python
+import urllib3
 import os
 import subprocess
 import pickle
+http = urllib3.PoolManager()
+
+testpicurl = 'http://images.nationalgeographic.com/wpf/media-live/photos/000/896/cache/camino-pilgrimage-george_89658_990x742.jpg'
 
 
-testpicurl = 'http://ngm.nationalgeographic.com/ngm/100best/images/multi1_main.jpg'
-
-
-picturepage = urlopen(testpicurl)
+picturepage = http.urlopen('GET', testpicurl, preload_content=False)
 picture = picturepage.read()
 
-imagefile = '/Users/kevin/Pictures/Imageoftheday/imageoftheday.jpg'
+imagefile = '/home/kevin/Projects/Image_of_the_Day/imageoftheday.jpg'
 fout2 = open(imagefile, "wb")
 fout2.write(picture)
 fout2.close()
 
 
-currenturlfile = '/Users/kevin/Pictures/Imageoftheday/currentimage.txt'
+currenturlfile = 'currentimage.dat'
 currentimage = open(currenturlfile,'wb')
 pickle.dump(testpicurl, currentimage)
 currentimage.close()
 
-SCRIPT = """/usr/bin/osascript<<END
-tell application "Finder"
-set desktop picture to {MacintoshHD/Users/kevin/Pictures/Imageoftheday/imageoftheday.jpg"} as alias
-end tell
-END"""
+SCRIPT = "gsettings set org.gnome.desktop.background picture-uri file://imagefile.jpg"
 subprocess.Popen(SCRIPT, shell = True)
 
-killallcommand = 'killall Dock'
-subprocess.Popen(killallcommand, shell = True)
