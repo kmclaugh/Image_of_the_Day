@@ -1,72 +1,43 @@
 #!/usr/bin/env python
 import urllib3
-import re
+from BeautifulSoup import BeautifulSoup
+from HTMLParser import HTMLParser
 import os
 import subprocess
 import datetime
 import pickle
 http = urllib3.PoolManager()
+import easygui
 
-
-
-# currentimageurl = None
-# currenturlfile = 'currentimage.dat'
-# currenturlopen = open(currenturlfile, 'rb')
-# currentimageurl = pickle.load(currenturlopen)
 
 natgeourl = 'http://photography.nationalgeographic.com/photography/photo-of-the-day/'
 imagepage = http.urlopen('GET', natgeourl, preload_content=False)
+parsed_html = BeautifulSoup(imagepage)
+primary_photo_div = parsed_html.body.find('div', attrs={'class':'primary_photo'})
+image_tag = primary_photo_div.find('img')
+image_src = image_tag['src']
+image_src = image_src[2:]
+current_image_file = open('/home/kevin/Projects/Image_of_the_Day/currentimage.dat', 'rb')
+current_image = pickle.load(current_image_file)
 
-photodayfinder = re.compile('//images.nationalgeographic.com/wpf/media-live/photos/000/896/cache/\S*.jpg')
-counter = 0
-for y in imagepage:
-    z = str(y)
-    x = photodayfinder.findall(z)
-    if x != []:
-        nextimageurl = x[0]
-        nextimageurl = 'http:' + nextimageurl
-        print(nextimageurl)
-        break
-# http://images.nationalgeographic.com/wpf/media-live/photos/000/896/cache/spinner-dolphins-hawaii_89672_990x742.jpg
-# if nextimageurl != currentimageurl:
-#     try:
-#         previouspage = urlopen(currentimageurl)
-#         previouspic = previouspage.read()
-#         now = datetime.datetime.now()
-#         previousimagefname = 'imageoftheday{}-{}-{}.jpg'.format(now.month, (now.day-1), now.year)
-#         fout1 = open(previousimagefname, "wb")
-#         fout1.write(previouspic)
-#         fout1.close()
-#         
-#     except:
-#         x = "Do Nothing"
-# 
-#     currenturlfile = '/Users/kevin/Pictures/Imageoftheday/currentimage.txt'
-#     currentimage = open(currenturlfile,'wb')
-#     pickle.dump(nextimageurl, currentimage)
-#     currentimage.close()
+if image_src != current_image:
 
-
-picturepage = http.urlopen('GET', nextimageurl, preload_content=False)
-picture = picturepage.read()
-
-imagefile = '/home/kevin/Projects/Image_of_the_Day/imageoftheday.jpg'
-fout2 = open(imagefile, "wb")
-fout2.write(picture)
-fout2.close()
-
-
-SCRIPT = "gsettings set org.gnome.desktop.background picture-uri file:///home/kevin/Projects/Image_of_the_Day/imageoftheday.jpg"
-subprocess.Popen(SCRIPT, shell = True)
-
-#        test = textsender(8173126800,'Wallpaper Updated')
-print('Wallpaper Updated')
-
-# else:
-#     print('No new image')
-#        test = textsender(8173126800,'No new image')
-##except Exception as inst:
-###    test = textsender(8173126800,inst)
-##    print(inst)
+    picturepage = http.urlopen('GET', image_src, preload_content=False)
+    picture = picturepage.read()
+    
+    imagefile = '/home/kevin/Projects/Image_of_the_Day/imageoftheday.jpg'
+    fout2 = open(imagefile, "wb")
+    fout2.write(picture)
+    fout2.close()
+    
+    
+    SCRIPT = "gsettings set org.gnome.desktop.background picture-uri file:///home/kevin/Projects/Image_of_the_Day/imageoftheday.jpg"
+    subprocess.Popen(SCRIPT, shell = True)
+    
+    print('Wallpaper Updated', image_tag['alt'])
+    current_image_file = open('/home/kevin/Projects/Image_of_the_Day/currentimage.dat', 'wb')
+    pickle.dump(image_src, current_image_file)
+    
+    easygui.msgbox(image_tag['alt'], title="Image of the Day")
 
 

@@ -17,7 +17,7 @@ fout2.write(picture)
 fout2.close()
 
 
-currenturlfile = 'currentimage.dat'
+currenturlfile = '/home/kevin/Projects/Image_of_the_Day/currentimage.dat'
 currentimage = open(currenturlfile,'wb')
 pickle.dump(testpicurl, currentimage)
 currentimage.close()
